@@ -13,10 +13,41 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\test_date">
+      <UniqueIdentifier>{ca057d56-1690-4924-bdce-de699faf0a73}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oop1.2.6.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="test.bat">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="test1-out.txt">
+      <Filter>Header Files\test_date</Filter>
+    </Text>
+    <Text Include="test2-out.txt">
+      <Filter>Header Files\test_date</Filter>
+    </Text>
+    <Text Include="test3-out.txt">
+      <Filter>Header Files\test_date</Filter>
+    </Text>
+    <Text Include="test4-out.txt">
+      <Filter>Header Files\test_date</Filter>
+    </Text>
+    <Text Include="test5-out.txt">
+      <Filter>Header Files\test_date</Filter>
+    </Text>
+    <Text Include="test6-out.txt">
+      <Filter>Header Files\test_date</Filter>
+    </Text>
+    <Text Include="test7-out.txt">
+      <Filter>Header Files\test_date</Filter>
+    </Text>
   </ItemGroup>
 </Project>

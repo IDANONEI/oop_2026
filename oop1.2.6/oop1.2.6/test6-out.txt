@@ -1,0 +1,2 @@
+Usage:
+  <source notation> <destination notation> <value>
