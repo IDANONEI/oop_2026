@@ -1,0 +1,4 @@
+Usage:
+  replace.exe <input file> <output file> <search string> <replace string>
+  replace.exe            (stdin mode)
+  replace.exe -h         (help)

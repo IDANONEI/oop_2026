@@ -1,0 +1,4 @@
+Usage:
+  invert <input_file>
+  invert            (read matrix from stdin)
+  invert -h         (help)
