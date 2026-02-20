@@ -2,62 +2,89 @@
 #include <string>
 #include <algorithm>
 #include <climits>
+#include <optional>
 
-
-int CharToDigit(char c)
+enum class ErrorType
 {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'A' && c <= 'Z') return 10 + (c - 'A');
-    //if (c >= 'a' && c <= 'z') return 10 + (c - 'a');
-    return -1;
+	None,
+	InvalidRadix,
+	EmptyString,
+	InvalidDigit,
+	Overflow
+};
+
+void PrintError(ErrorType error)
+{
+	switch (error)
+	{
+	case ErrorType::InvalidRadix:
+		std::cerr << "Error: invalid radix (must be 2..36)" << std::endl;
+		break;
+	case ErrorType::EmptyString:
+		std::cerr << "Error: empty string" << std::endl;
+		break;
+	case ErrorType::InvalidDigit:
+		std::cerr << "Error: invalid digit for given radix" << std::endl;
+		break;
+	case ErrorType::Overflow:
+		std::cerr << "Error: overflow" << std::endl;
+		break;
+	default:
+		break;
+	}
 }
 
-char DigitToChar(int digit)
+std::optional<int> CharToDigit(char ch)
 {
-    if (digit >= 0 && digit <= 9)
-        return '0' + digit;
-
-    if (digit >= 10 && digit <= 35)
-        return 'A' + (digit - 10);
-
-    return '?';
+	if (ch >= '0' && ch <= '9') return ch - '0';
+	if (ch >= 'A' && ch <= 'Z') return 10 + (ch - 'A');
+	if (ch >= 'a' && ch <= 'z') return 10 + (ch - 'a');
+	return std::nullopt;
 }
 
-bool ValidateRadix(int radix, bool& wasError)
+std::optional<char> DigitToChar(int digit)
 {
-    wasError = false;
-    if (radix < 2 || radix > 36)
-    {
-        wasError = true;
-        return false;
-    }
-    return true;
+	if (digit >= 0 && digit <= 9) return '0' + digit;
+	if (digit >= 10 && digit <= 35) return 'A' + (digit - 10);
+	return std::nullopt;
 }
 
-bool CheckRadix(int radix, const std::string& str, bool& wasError)
+bool ValidateRadix(int radix, ErrorType& error)
 {
-    wasError = false;
-    if (!ValidateRadix(radix, wasError)) 
-        return false;
-
-    if (str.empty())
-    {
-        wasError = true;
-        return false;
-    }
-
-    return true;
+	error = ErrorType::None;
+	if (radix < 2 || radix > 36)
+	{
+		error = ErrorType::InvalidRadix;
+		return false;
+	}
+	return true;
 }
 
-bool CheckRadix(int radix, int n, bool& wasError)
+bool CheckRadix(int radix, const std::string& str, ErrorType& error)
 {
-    wasError = false;
-    return ValidateRadix(radix, wasError);
+	error = ErrorType::None;
+
+	if (!ValidateRadix(radix, error))
+		return false;
+
+	if (str.empty())
+	{
+		error = ErrorType::EmptyString;
+		return false;
+	}
+
+	return true;
 }
 
-int StringToInt(const std::string& str, int radix, bool& wasError)
+bool CheckRadix(int radix, ErrorType& error)
 {
-    if (!CheckRadix(radix, str, wasError))
+	error = ErrorType::None;
+	return ValidateRadix(radix, error);
+}
+
+int StringToInt(const std::string& str, int radix, ErrorType& error)
+{
+    if (!CheckRadix(radix, str, error))
         return 0;
 
     size_t i = 0;
@@ -69,104 +96,142 @@ int StringToInt(const std::string& str, int radix, bool& wasError)
         ++i;
         if (i == str.size())
         {
-            wasError = true;
+            error = ErrorType::InvalidDigit;
             return 0;
         }
     }
 
-    long long result = 0;
-    long long limit = negative ? -(long long)INT_MIN : (long long)INT_MAX;
+    int result = 0;
+    const int LIMIT = negative ? INT_MIN : INT_MAX;
+	int signedDigit = 0;
+	int digit = 0;
 
     for (; i < str.size(); ++i)
     {
-        int digit = CharToDigit(str[i]);
-        if (digit < 0 || digit >= radix)
+        auto digitOpt = CharToDigit(str[i]);
+        if (!digitOpt)
         {
-            wasError = true;
+            error = ErrorType::InvalidDigit;
             return 0;
         }
 
-        if (result > (limit - digit) / radix)
+        digit = digitOpt.value();
+
+        if (digit >= radix)
         {
-            wasError = true;
+            error = ErrorType::InvalidDigit;
             return 0;
         }
 
-        result = result * radix + digit;
+        signedDigit = negative ? -digit : digit;
+
+        if (!negative)
+        {
+            if (result > (LIMIT - digit) / radix)
+            {
+                error = ErrorType::Overflow;
+                return 0;
+            }
+        }
+        else
+        {
+            if (result < (LIMIT + digit) / radix)
+            {
+                error = ErrorType::Overflow;
+                return 0;
+            }
+        }
+
+        result = result * radix + signedDigit;
     }
 
-    result = negative ? -result : result;
-    return (int)result;
+    error = ErrorType::None;
+    return result;
 }
 
-std::string IntToString(int n, int radix, bool& wasError)
+std::string IntToString(int number, int radix, ErrorType& error)
 {
-    if (!CheckRadix(radix, n, wasError))
+    if (!CheckRadix(radix, error))
         return "";
 
-    if (n == 0)
-        return "0";
-
-    bool negative = (n < 0);
-    unsigned int value;
-
-    if (negative)
-        value = static_cast<unsigned int>(-(n + 1)) + 1;
-    else
-        value = static_cast<unsigned int>(n);
-
-    std::string result;
-    while (value > 0)
+    if (number == 0)
     {
-        int remainder = value % radix;
-        result.push_back(DigitToChar(remainder));
-        value /= radix;
+        error = ErrorType::None;
+        return "0";
+    }
+
+    bool negative = (number < 0);
+    std::string result;
+
+	int rem = 0;
+    while (number != 0)
+    {
+		rem = number % radix;  
+        if (rem < 0) rem = -rem;    
+        auto chOpt = DigitToChar(rem);
+        if (!chOpt)
+        {
+            error = ErrorType::InvalidDigit;
+            return "";
+        }
+        result.push_back(*chOpt);
+
+        number /= radix;          
     }
 
     if (negative)
         result.push_back('-');
 
     std::reverse(result.begin(), result.end());
+
+    error = ErrorType::None;
     return result;
 }
 
 void PrintHelp(std::ostream& out)
 {
-    out << "Usage:\n"
-        << "  <source notation> <destination notation> <value>\n";
+	out << "Usage:\n"
+		<< "  <source notation> <destination notation> <value>\n";
 }
-
 
 int main(int argc, char* argv[])
 {
-    if (argc != 4)
-    {
-        PrintHelp(std::cout);
-        return EXIT_FAILURE;
-    }
+	if (argc != 4)
+	{
+		PrintHelp(std::cout);
+		return EXIT_FAILURE;
+	}
 
-    int sourceNotation = std::stoi(argv[1]);
-    int destinationNotation = std::stoi(argv[2]);
-    std::string value = argv[3];
-    bool wasError = false;
+	ErrorType error = ErrorType::None;
 
-    int number = StringToInt(value, sourceNotation, wasError);
+	int sourceNotation = StringToInt(argv[1], 10, error);
+	if (error != ErrorType::None)
+	{
+		PrintError(error);
+		return EXIT_FAILURE;
+	}
 
-    if (wasError)
-    {
-        std::cerr << "Error transformation string to int";
-        return EXIT_FAILURE;
-    }
+	int destinationNotation = StringToInt(argv[2], 10, error);
+	if (error != ErrorType::None)
+	{
+		PrintError(error);
+		return EXIT_FAILURE;
+	}
 
-    std::string result = IntToString(number, destinationNotation, wasError);
+	int number = StringToInt(argv[3], sourceNotation, error);
+	if (error != ErrorType::None)
+	{
+		PrintError(error);
+		return EXIT_FAILURE;
+	}
 
-    if (wasError)
-    {
-        std::cerr << "Error transformation int to string";
-        return EXIT_FAILURE;
-    }
+	std::string result = IntToString(number, destinationNotation, error);
+	if (error != ErrorType::None)
+	{
+		PrintError(error);
+		return EXIT_FAILURE;
+	}
 
-    std::cout << result << std::endl;
-    return EXIT_SUCCESS;
+	std::cout << result << std::endl;
+	return EXIT_SUCCESS;
 }
-

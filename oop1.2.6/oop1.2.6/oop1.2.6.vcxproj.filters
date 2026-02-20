@@ -49,5 +49,14 @@
     <Text Include="test7-out.txt">
       <Filter>Header Files\test_date</Filter>
     </Text>
+    <Text Include="test8-out.txt">
+      <Filter>Header Files\test_date</Filter>
+    </Text>
+    <Text Include="test9-out.txt">
+      <Filter>Header Files\test_date</Filter>
+    </Text>
+    <Text Include="test10-out.txt">
+      <Filter>Header Files\test_date</Filter>
+    </Text>
   </ItemGroup>
 </Project>
