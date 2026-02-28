@@ -4,6 +4,10 @@
 #include <climits>
 #include <optional>
 
+constexpr int MIN_RADIX = 2;
+
+constexpr int MAX_RADIX = 36;
+
 enum class ErrorType
 {
 	None,
@@ -52,7 +56,7 @@ std::optional<char> DigitToChar(int digit)
 bool ValidateRadix(int radix, ErrorType& error)
 {
 	error = ErrorType::None;
-	if (radix < 2 || radix > 36)
+	if (radix < MIN_RADIX || radix > MAX_RADIX)
 	{
 		error = ErrorType::InvalidRadix;
 		return false;
@@ -102,7 +106,6 @@ int StringToInt(const std::string& str, int radix, ErrorType& error)
     }
 
     int result = 0;
-    const int LIMIT = negative ? INT_MIN : INT_MAX;
 	int signedDigit = 0;
 	int digit = 0;
 
@@ -127,7 +130,7 @@ int StringToInt(const std::string& str, int radix, ErrorType& error)
 
         if (!negative)
         {
-            if (result > (LIMIT - digit) / radix)
+            if (result > (INT_MAX - digit) / radix) 
             {
                 error = ErrorType::Overflow;
                 return 0;
@@ -135,7 +138,7 @@ int StringToInt(const std::string& str, int radix, ErrorType& error)
         }
         else
         {
-            if (result < (LIMIT + digit) / radix)
+            if (result < (INT_MIN + digit) / radix)
             {
                 error = ErrorType::Overflow;
                 return 0;

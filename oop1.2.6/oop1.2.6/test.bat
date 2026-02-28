@@ -11,6 +11,15 @@ fc %OUT% test1-out.txt || goto err
 %PROGRAM% 2 10 1111 > %OUT% || goto err
 fc %OUT% test2-out.txt || goto err
 
+::test letters 16 -> 10
+%PROGRAM% 16 10 1F > %OUT% || goto err
+fc %OUT% test3-out.txt || goto err
+
+::test letters 36 -> 10
+%PROGRAM% 36 10 Z > %OUT% || goto err
+fc %OUT% test4-out.txt || goto err
+
+
 ::test3 - invalid digit
 %PROGRAM% 2 10 123 > %OUT% 2>&1
 if not errorlevel 1 goto err
@@ -34,18 +43,27 @@ if not errorlevel 1 goto err
 %PROGRAM% 10 2 > %OUT% 2>&1
 if not errorlevel 1 goto err
 
-::test8 - OK (negative number)
+::test8 - OK - negative number
 %PROGRAM% 10 2 -15 > %OUT% || goto err
-fc %OUT% test8-out.txt || goto err
+fc %OUT% test8-out.txt || goto err 
 
-::test9 - OK (INT_MIN in hex)
+::test9 - OK INT_MIN
 %PROGRAM% 10 16 -2147483648 > %OUT% || goto err
 fc %OUT% test9-out.txt || goto err
 
-::test10 - overflow (INT_MAX+1)
+::test10 - overflow INT_MAX + 1
 %PROGRAM% 10 10 2147483648 > %OUT% 2>&1
 if not errorlevel 1 goto err
 findstr /C:"overflow" %OUT% >nul || goto err
+
+::test11 - overflow INT_MIN - 1
+%PROGRAM% 10 10 -2147483649 > %OUT% 2>&1
+if not errorlevel 1 goto err
+findstr /C:"overflow" %OUT% >nul || goto err
+
+::test12 - OK INT_MAX
+%PROGRAM% 10 16 2147483647 > %OUT% || goto err
+fc %OUT% test10-out.txt || goto err
 
 echo ALL tests passed
 exit /B 0

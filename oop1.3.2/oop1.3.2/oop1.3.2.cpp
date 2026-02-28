@@ -93,7 +93,7 @@ bool TryReadMatrix(Matrix3x3& matrix, const char* filename = nullptr)
 
 bool Inverse3x3(Matrix3x3& matrix, Matrix3x3& inverseM)
 {
-    const double a = matrix[0][0], b = matrix[0][1], c = matrix[0][2]; // вынести
+    const double a = matrix[0][0], b = matrix[0][1], c = matrix[0][2]; 
     const double d = matrix[1][0], e = matrix[1][1], f = matrix[1][2];
     const double g = matrix[2][0], h = matrix[2][1], i = matrix[2][2];
 
