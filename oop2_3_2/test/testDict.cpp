@@ -3,41 +3,51 @@
 
 TEST_CASE("Поиск перевода слова")
 {
-	DictionaryMap dict;
-	DictionaryMap reverseDict;
+	DictionaryStorage dictionary;
 
-	AddTranslation(dict, reverseDict, "board", "доска");
-	AddTranslation(dict, reverseDict, "board", "плата");
-	AddTranslation(dict, reverseDict, "board", "щит");
+	AddTranslation(dictionary, "board", "доска");
+	AddTranslation(dictionary, "board", "плата");
+	AddTranslation(dictionary, "board", "щит");
 
 	SECTION("Слово есть в словаре")
 	{
-		const auto* result = FindTranslation(dict, "board");
+		auto result = FindTranslation(dictionary.direct, "board");
 
-		REQUIRE(result != nullptr);
-		CHECK(result->size() == 3);
-		CHECK(result->contains("доска"));
-		CHECK(result->contains("плата"));
-		CHECK(result->contains("щит"));
+		REQUIRE(result);
+		CHECK(result->get().size() == 3);
+		CHECK(result->get().contains("доска"));
+		CHECK(result->get().contains("плата"));
+		CHECK(result->get().contains("щит"));
 	}
 
 	SECTION("Слово вводится в другом регистре")
 	{
-		const auto* result = FindTranslation(dict, "bOaRd");
+		#include <clocale>
+		std::setlocale(LC_ALL, "");
 
-		REQUIRE(result != nullptr);
-		CHECK(result->contains("доска"));
+		auto result = FindTranslation(dictionary.direct, "bOaRd");
+
+		REQUIRE(result);
+		CHECK(result->get().contains("доска"));
+	}
+
+	SECTION("Русское в другом регистре")
+	{
+		auto result = FindTranslation(dictionary.reverse, "ДоСкА");
+
+		REQUIRE(result);
+		CHECK(result->get().contains("board"));
 	}
 
 	SECTION("Слова нет в словаре")
 	{
-		CHECK(FindTranslation(dict, "fish") == nullptr);
+		CHECK_FALSE(FindTranslation(dictionary.direct, "fish"));
 	}
 
 	SECTION("Пустой словарь")
 	{
 		DictionaryMap emptyDict;
-		CHECK(FindTranslation(emptyDict, "board") == nullptr);
+		CHECK_FALSE(FindTranslation(emptyDict, "board"));
 	}
 }
 
@@ -47,145 +57,152 @@ TEST_CASE("Добавление перевода")
 
 	SECTION("Добавление нового слова")
 	{
-		DictionaryMap dict;
-		DictionaryMap reverseDict;
+		DictionaryStorage dictionary;
 
-		AddTranslation(dict, reverseDict, board, "доска");
+		AddTranslation(dictionary, board, "доска");
 
-		REQUIRE(dict.count("board") == 1);
-		CHECK(dict["board"].size() == 1);
-		CHECK(dict["board"].contains("доска"));
+		REQUIRE(dictionary.direct.count("board") == 1);
+		CHECK(dictionary.direct["board"].size() == 1);
+		CHECK(dictionary.direct["board"].contains("доска"));
 
-		REQUIRE(reverseDict.count("доска") == 1);
-		CHECK(reverseDict["доска"].contains("board"));
+		REQUIRE(dictionary.reverse.count("доска") == 1);
+		CHECK(dictionary.reverse["доска"].contains("board"));
 	}
 
 	SECTION("Одинаковый перевод не добавляется дважды")
 	{
-		DictionaryMap dict;
-		DictionaryMap reverseDict;
+		DictionaryStorage dictionary;
 
-		AddTranslation(dict, reverseDict, board, "доска");
-		AddTranslation(dict, reverseDict, board, "доска");
+		AddTranslation(dictionary, board, "доска");
+		AddTranslation(dictionary, board, "доска");
 
-		REQUIRE(dict.count("board") == 1);
-		CHECK(dict["board"].size() == 1);
+		REQUIRE(dictionary.direct.count("board") == 1);
+		CHECK(dictionary.direct["board"].size() == 1);
 	}
 
 	SECTION("Несколько переводов одного слова")
 	{
-		DictionaryMap dict;
-		DictionaryMap reverseDict;
+		DictionaryStorage dictionary;
 
-		AddTranslation(dict, reverseDict, board, "доска");
-		AddTranslation(dict, reverseDict, board, "плата");
+		AddTranslation(dictionary, board, "доска");
+		AddTranslation(dictionary, board, "плата");
 
-		REQUIRE(dict.count("board") == 1);
-		CHECK(dict["board"].size() == 2);
-		CHECK(dict["board"].contains("доска"));
-		CHECK(dict["board"].contains("плата"));
+		REQUIRE(dictionary.direct.count("board") == 1);
+		CHECK(dictionary.direct["board"].size() == 2);
+		CHECK(dictionary.direct["board"].contains("доска"));
+		CHECK(dictionary.direct["board"].contains("плата"));
 	}
 
 	SECTION("Слово в разном регистре считается одним и тем же")
 	{
-		DictionaryMap dict;
-		DictionaryMap reverseDict;
+		DictionaryStorage dictionary;
 
-		AddTranslation(dict, reverseDict, "board", "доска");
-		AddTranslation(dict, reverseDict, "BoArD", "щит");
+		AddTranslation(dictionary, "board", "доска");
+		AddTranslation(dictionary, "BoArD", "щит");
 
-		REQUIRE(dict.size() == 1);
-		CHECK(dict["board"].size() == 2);
+		REQUIRE(dictionary.direct.size() == 1);
+		CHECK(dictionary.direct["board"].size() == 2);
 	}
 }
 
 TEST_CASE("Словарь с несколькими словами")
 {
-	DictionaryMap dict;
-	DictionaryMap reverseDict;
+	DictionaryStorage dictionary;
 
-	AddTranslation(dict, reverseDict, "board", "доска");
-	AddTranslation(dict, reverseDict, "cat", "кот");
-	AddTranslation(dict, reverseDict, "cat", "кошка");
+	AddTranslation(dictionary, "board", "доска");
+	AddTranslation(dictionary, "cat", "кот");
+	AddTranslation(dictionary, "cat", "кошка");
 
 	SECTION("Переводы первого слова")
 	{
-		const auto* result = FindTranslation(dict, "board");
+		auto result = FindTranslation(dictionary.direct, "board");
 
-		REQUIRE(result != nullptr);
-		CHECK(result->size() == 1);
-		CHECK(result->contains("доска"));
+		REQUIRE(result);
+		CHECK(result->get().size() == 1);
+		CHECK(result->get().contains("доска"));
 	}
 
 	SECTION("Переводы второго слова")
 	{
-		const auto* result = FindTranslation(dict, "cat");
+		auto result = FindTranslation(dictionary.direct, "cat");
 
-		REQUIRE(result != nullptr);
-		CHECK(result->size() == 2);
-		CHECK(result->contains("кот"));
-		CHECK(result->contains("кошка"));
+		REQUIRE(result);
+		CHECK(result->get().size() == 2);
+		CHECK(result->get().contains("кот"));
+		CHECK(result->get().contains("кошка"));
 	}
 
 	SECTION("Неизвестное слово")
 	{
-		CHECK(FindTranslation(dict, "dog") == nullptr);
+		CHECK_FALSE(FindTranslation(dictionary.direct, "dog"));
 	}
 }
 
 TEST_CASE("Обратный перевод")
 {
-	DictionaryMap dict;
-	DictionaryMap reverseDict;
+	DictionaryStorage dictionary;
 
-	AddTranslation(dict, reverseDict, "cat", "кот");
-	AddTranslation(dict, reverseDict, "cat", "кошка");
+	AddTranslation(dictionary, "cat", "кот");
+	AddTranslation(dictionary, "cat", "кошка");
 
 	SECTION("Русское слово переводится обратно")
 	{
-		const auto* result = FindTranslation(reverseDict, "кот");
+		auto result = FindTranslation(dictionary.reverse, "кот");
 
-		REQUIRE(result != nullptr);
-		CHECK(result->contains("cat"));
+		REQUIRE(result);
+		CHECK(result->get().contains("cat"));
 	}
 
 	SECTION("Разные слова на одно английское")
 	{
-		const auto* result1 = FindTranslation(reverseDict, "кот");
-		const auto* result2 = FindTranslation(reverseDict, "кошка");
+		auto result1 = FindTranslation(dictionary.reverse, "кот");
+		auto result2 = FindTranslation(dictionary.reverse, "кошка");
 
-		REQUIRE(result1 != nullptr);
-		REQUIRE(result2 != nullptr);
+		REQUIRE(result1);
+		REQUIRE(result2);
 
-		CHECK(result1->contains("cat"));
-		CHECK(result2->contains("cat"));
+		CHECK(result1->get().contains("cat"));
+		CHECK(result2->get().contains("cat"));
 	}
 }
 
-
 TEST_CASE("Отрицательные сценарии")
 {
-	DictionaryMap dict;
-	DictionaryMap reverseDict;
+	DictionaryStorage dictionary;
+
 	SECTION("Поиск пустой строки")
 	{
-		CHECK(FindTranslation(dict, "") == nullptr);
+		CHECK_FALSE(FindTranslation(dictionary.direct, ""));
 	}
+
 	SECTION("Добавление пустого перевода")
 	{
-		AddTranslation(dict, reverseDict, "board", "");
-		REQUIRE(dict.count("board") == 1);
-		CHECK(dict["board"].contains(""));
+		AddTranslation(dictionary, "board", "");
+		REQUIRE(dictionary.direct.count("board") == 1);
+		CHECK(dictionary.direct["board"].contains(""));
 	}
+
 	SECTION("Поиск в пустом reverse словаре")
 	{
-		CHECK(FindTranslation(reverseDict, "кот") == nullptr);
+		CHECK_FALSE(FindTranslation(dictionary.reverse, "кот"));
 	}
+
 	SECTION("Поиск неизвестного слова после добавления других")
 	{
-		AddTranslation(dict, reverseDict, "board", "доска");
-		AddTranslation(dict, reverseDict, "cat", "кот");
+		AddTranslation(dictionary, "board", "доска");
+		AddTranslation(dictionary, "cat", "кот");
 
-		CHECK(FindTranslation(dict, "dog") == nullptr);
+		CHECK_FALSE(FindTranslation(dictionary.direct, "dog"));
 	}
+
+
+}
+
+TEST_CASE("Загрузка несуществующего файла")
+{
+	DictionaryStorage dictionary;
+
+	REQUIRE_NOTHROW(LoadDictionary("not_exist.txt", dictionary));
+	CHECK(dictionary.direct.empty());
+	CHECK(dictionary.reverse.empty());
 }

@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-void HandleUnknownWord(DictionaryMap& dict, DictionaryMap& reverseDict, const std::string& word, std::istream& in, bool& dictionaryChanged)
+void HandleUnknownWord(DictionaryStorage& dictionary, const std::string& word, std::istream& in, bool& dictionaryChanged)
 {
 	PrintInfoForUser(MessageType::UnknownWord, word, "");
 	std::string translation = ReadUserInput(in);
@@ -15,13 +15,13 @@ void HandleUnknownWord(DictionaryMap& dict, DictionaryMap& reverseDict, const st
 		return;
 	}
 
-	AddTranslation(dict, reverseDict, word, translation);
+	AddTranslation(dictionary, word, translation);
 	dictionaryChanged = true;
 
 	PrintInfoForUser(MessageType::WordSaved, word, translation);
 }
 
-void ProcessUserQueries(DictionaryMap& dict, DictionaryMap& reverseDict, std::istream& in, bool& dictionaryChanged)
+void ProcessUserQueries(DictionaryStorage& dictionary, std::istream& in, bool& dictionaryChanged)
 {
 	while (true)
 	{
@@ -32,38 +32,37 @@ void ProcessUserQueries(DictionaryMap& dict, DictionaryMap& reverseDict, std::is
 			break;
 		}
 
-		const auto* translations = FindTranslation(dict, word);
+		TranslationResult translations = FindTranslation(dictionary.direct, word);
 
-		if (translations == nullptr)
+		if (!translations)
 		{
-			translations = FindTranslation(reverseDict, word);
+			translations = FindTranslation(dictionary.reverse, word);
 		}
 
-		if (translations != nullptr)
+		if (translations)
 		{
-			PrintInfoForUser(MessageType::Translation,"",JoinTranslations(*translations));
+			PrintInfoForUser(MessageType::Translation, "", JoinTranslations(translations->get()));
 		}
 		else
 		{
-			HandleUnknownWord(dict, reverseDict, word, in, dictionaryChanged);
+			HandleUnknownWord(dictionary, word, in, dictionaryChanged);
 		}
 	}
 }
 
 void RunApp(const std::string& fileDictName, std::istream& in)
 {
-	DictionaryMap dict;
-	DictionaryMap reverseDict;
+	DictionaryStorage dictionary;
 	bool dictionaryChanged = false;
 
-	LoadDictionary(fileDictName, dict, reverseDict);
-	ProcessUserQueries(dict, reverseDict, in, dictionaryChanged);
+	LoadDictionary(fileDictName, dictionary);
+	ProcessUserQueries(dictionary, in, dictionaryChanged);
 
 	if (dictionaryChanged)
 	{
 		if (AskSaveChanges(in))
 		{
-			ExportDictionary(fileDictName, dict);
+			ExportDictionary(fileDictName, dictionary);
 			PrintInfoForUser(MessageType::SaveSuccess, "", "");
 		}
 	}
@@ -71,10 +70,9 @@ void RunApp(const std::string& fileDictName, std::istream& in)
 	PrintInfoForUser(MessageType::Goodbye, "", "");
 }
 
-
 int main(int argc, char* argv[])
 {
-	setlocale(LC_ALL, "Russian");
+	std::setlocale(LC_ALL, "");
 
 	if (!CheckDictionaryFileArgument(argc))
 	{

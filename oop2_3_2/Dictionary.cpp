@@ -10,7 +10,6 @@
 #include <codecvt>
 #include <stdexcept>
 #include <filesystem>
-#include <cwctype>
 
 namespace
 {
@@ -67,24 +66,24 @@ namespace
 	}
 }
 
-void AddTranslation(DictionaryMap& dict, DictionaryMap& reverseDict, const std::string& key, const std::string& translation)
+void AddTranslation(DictionaryStorage& dictionary, const std::string& key, const std::string& translation)
 {
-	dict[NormalizeWord(key)].insert(translation);
-	reverseDict[NormalizeWord(translation)].insert(key);
+	dictionary.direct[NormalizeWord(key)].insert(NormalizeWord(translation));
+	dictionary.reverse[NormalizeWord(translation)].insert(NormalizeWord(key));
 }
 
-const std::unordered_set<std::string>* FindTranslation(const DictionaryMap& dict, const std::string& key)
+TranslationResult FindTranslation(const DictionaryMap& dict, const std::string& key)
 {
 	auto it = dict.find(NormalizeWord(key));
 	if (it != dict.end())
 	{
-		return &it->second;
+		return it->second;
 	}
-
-	return nullptr;
+	return std::nullopt;
 }
 
-void LoadDictionary(const std::string& fileName, DictionaryMap& dict, DictionaryMap& reverseDict)
+
+void LoadDictionary(const std::string& fileName, DictionaryStorage& dictionary)
 {
 	if (!std::filesystem::exists(fileName))
 	{
@@ -112,13 +111,14 @@ void LoadDictionary(const std::string& fileName, DictionaryMap& dict, Dictionary
 		}
 
 		const std::string& key = parts[0];
-		for (size_t i = 1; i < parts.size(); ++i)
+		for (const auto& part : parts)
 		{
-			if (!parts[i].empty())
+			if (!part.empty())
 			{
-				AddTranslation(dict, reverseDict, key, parts[i]);
+				AddTranslation(dictionary, key, part);
 			}
 		}
+
 	}
 
 	if (!file.eof() && file.fail())
@@ -127,7 +127,7 @@ void LoadDictionary(const std::string& fileName, DictionaryMap& dict, Dictionary
 	}
 }
 
-void ExportDictionary(const std::string& fileName, const DictionaryMap& dict)
+void ExportDictionary(const std::string& fileName, const DictionaryStorage& dictionary)
 {
 	std::ofstream file(fileName);
 	if (!file.is_open())
@@ -135,7 +135,7 @@ void ExportDictionary(const std::string& fileName, const DictionaryMap& dict)
 		throw std::runtime_error("Не удалось открыть файл для записи: " + fileName);
 	}
 
-	for (const auto& [normalizedKey, translations] : dict)
+	for (const auto& [normalizedKey, translations] : dictionary.direct)
 	{
 		file << normalizedKey;
 		if (!file)
