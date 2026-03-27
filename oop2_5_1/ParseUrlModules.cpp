@@ -6,9 +6,19 @@
 #include <cctype>
 #include <iostream>
 
-
 namespace
 {
+
+	inline const std::uint16_t START_PORT = 1;
+	inline const std::uint16_t FINISH_PORT = 65535;
+
+	inline const std::map<Protocol, std::uint16_t> DEFAULT_PORTS =
+	{
+		{Protocol::HTTP, 80},
+		{Protocol::HTTPS, 443},
+		{Protocol::FTP, 21}
+	};
+
 	std::string ToLower(const std::string s)
 	{
 		std::string result = s;
@@ -47,55 +57,60 @@ namespace
 	{
 		if (str.empty())
 			return GetDefaultPort(protocol);
-
-		int value = std::stoi(str);
-		if (value < START_PORT || value > FINISH_PORT)
+		try
+		{
+			int value = std::stoi(str);
+			if (value < START_PORT || value > FINISH_PORT)
+				return std::nullopt;
+			return static_cast<std::uint16_t>(value);
+		}
+		catch (const std::exception&)
+		{
 			return std::nullopt;
-
-		return static_cast<std::uint16_t>(value);
+		}
 	}
 
 	std::string GetDocument(const std::string& str)
+	{
+		if (str.empty())
 		{
-			if (str.empty())
-			{
-				return "";
-			}
-
-			static const std::regex pathPattern(R"(^([^?#]*)(?:\?[^#]*)?(?:#.*)?$)");
-			std::smatch match;
-
-			if (!std::regex_match(str, match, pathPattern))
-			{
-				return "";
-			}
-
-			std::string path = match[1].str();
-			if (path.empty())
-			{
-				return "";
-			}
-
-			static const std::regex filePattern(R"((?:.*/)?([^/.][^/]*\.[^/.][^/]*)$)");
-			std::smatch fileMatch;
-
-			if (!std::regex_match(path, fileMatch, filePattern))
-			{
-				return "";
-			}
-
-			return fileMatch[1].str();
+			return "";
 		}
+
+		static const std::regex pathPattern(R"(^([^?#]*)(?:\?[^#]*)?(?:#.*)?$)");
+		std::smatch match;
+
+		if (!std::regex_match(str, match, pathPattern))
+		{
+			return "";
+		}
+
+		std::string path = match[1].str();
+		if (path.empty())
+		{
+			return "";
+		}
+
+		static const std::regex filePattern(R"((?:.*/)?([^/.][^/]*\.[^/.][^/]*)$)");
+		std::smatch fileMatch;
+
+		if (!std::regex_match(path, fileMatch, filePattern))
+		{
+			return "";
+		}
+
+		return fileMatch[1].str();
+	}
 }
 
-bool ParseURL(const std::string& str, UrlComponents& result)
+std::optional<UrlComponents> GetParseURL(const std::string& str)
 {
 	static const std::regex pattern(R"(^([A-Za-z]+)://([^/:]+)(?::([0-9]+))?(?:/(.*))?$)");
 	std::smatch match;
 
 	if (!std::regex_match(str, match, pattern))
 	{
-		return false;
+		return std::nullopt;
 	}
 
 	auto protocol = GetProtocol(ToLower(match[1].str()));
@@ -103,25 +118,23 @@ bool ParseURL(const std::string& str, UrlComponents& result)
 
 	if (!protocol || !host)
 	{
-		return false;
+		return std::nullopt;
 	}
 
 	auto port = GetPort(match[3].str(), *protocol);
 	if (!port)
 	{
-		return false;
+		return std::nullopt;
 	}
 
-	auto document = GetDocument(match[4].str());
-
+	UrlComponents result;
 	result.protocol = *protocol;
 	result.host = *host;
 	result.port = *port;
-	result.document = document;
+	result.document = GetDocument(match[4].str());
 
-	return true;
+	return result;
 }
-
 
 void PrintComponents(const UrlComponents& components)
 {

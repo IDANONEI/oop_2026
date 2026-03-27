@@ -18,15 +18,5 @@ struct UrlComponents
 	std::string document;
 };
 
-inline const std::uint16_t START_PORT = 1;
-inline const std::uint16_t FINISH_PORT = 65535;
-
-inline const std::map<Protocol, std::uint16_t> DEFAULT_PORTS =
-{
-	{Protocol::HTTP, 80},
-	{Protocol::HTTPS, 443},
-	{Protocol::FTP, 21}
-};
-
-bool ParseURL(const std::string& url, UrlComponents& components);
+std::optional<UrlComponents> GetParseURL(const std::string& str);
 void PrintComponents(const UrlComponents& components);

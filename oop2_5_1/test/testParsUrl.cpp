@@ -1,72 +1,66 @@
 #include <catch2/catch_test_macros.hpp>
-#include "../ParseUrlModules.h"
+#include "../ParseURLModules.h"
 
 TEST_CASE("Парсинг корректных URL")
 {
 	SECTION("С портом и файлом")
 	{
-		UrlComponents components;
-		bool result = ParseURL("http://example.com:8080/index.html", components);
+		auto result = GetParseURL("http://example.com:8080/index.html");
 
-		CHECK(result == true);
-		CHECK(components.protocol == Protocol::HTTP);
-		CHECK(components.host == "example.com");
-		CHECK(components.port == 8080);
-		CHECK(components.document == "index.html");
+		REQUIRE(result.has_value());
+		CHECK(result->protocol == Protocol::HTTP);
+		CHECK(result->host == "example.com");
+		CHECK(result->port == 8080);
+		CHECK(result->document == "index.html");
 	}
 
 	SECTION("Без порта")
 	{
-		UrlComponents components;
-		bool result = ParseURL("https://example.com/page.html", components);
+		auto result = GetParseURL("https://example.com/page.html");
 
-		CHECK(result == true);
-		CHECK(components.protocol == Protocol::HTTPS);
-		CHECK(components.host == "example.com");
-		CHECK(components.port == 443);
-		CHECK(components.document == "page.html");
+		REQUIRE(result.has_value());
+		CHECK(result->protocol == Protocol::HTTPS);
+		CHECK(result->host == "example.com");
+		CHECK(result->port == 443);
+		CHECK(result->document == "page.html");
 	}
 
 	SECTION("Без файла")
 	{
-		UrlComponents components;
-		bool result = ParseURL("ftp://example.com/path/to/page", components);
+		auto result = GetParseURL("ftp://example.com/path/to/page");
 
-		CHECK(result == true);
-		CHECK(components.protocol == Protocol::FTP);
-		CHECK(components.host == "example.com");
-		CHECK(components.port == 21);
-		CHECK(components.document == "");
+		REQUIRE(result.has_value());
+		CHECK(result->protocol == Protocol::FTP);
+		CHECK(result->host == "example.com");
+		CHECK(result->port == 21);
+		CHECK(result->document == "");
 	}
 }
 
-TEST_CASE("Парсинг query и fragment")
+TEST_CASE("query")
 {
 	SECTION("Query без файла")
 	{
-		UrlComponents components;
-		bool result = ParseURL("http://example.com/test?u=124.trt", components);
+		auto result = GetParseURL("http://example.com/test?u=124.trt");
 
-		CHECK(result == true);
-		CHECK(components.document == "");
+		REQUIRE(result.has_value());
+		CHECK(result->document == "");
 	}
 
 	SECTION("Query с файлом")
 	{
-		UrlComponents components;
-		bool result = ParseURL("http://example.com/docs/page.html?x=1", components);
+		auto result = GetParseURL("http://example.com/docs/page.html?x=1");
 
-		CHECK(result == true);
-		CHECK(components.document == "page.html");
+		REQUIRE(result.has_value());
+		CHECK(result->document == "page.html");
 	}
 
 	SECTION("Fragment с файлом")
 	{
-		UrlComponents components;
-		bool result = ParseURL("http://example.com/docs/page.html#top", components);
+		auto result = GetParseURL("http://example.com/docs/page.html#top");
 
-		CHECK(result == true);
-		CHECK(components.document == "page.html");
+		REQUIRE(result.has_value());
+		CHECK(result->document == "page.html");
 	}
 }
 
@@ -74,25 +68,48 @@ TEST_CASE("Парсинг некорректных URL")
 {
 	SECTION("Неизвестный протокол")
 	{
-		UrlComponents components;
-		CHECK(ParseURL("smtp://example.com/file.txt", components) == false);
+		auto result = GetParseURL("smtp://example.com/file.txt");
+		CHECK_FALSE(result.has_value());
 	}
 
 	SECTION("Порт меньше 1")
 	{
-		UrlComponents components;
-		CHECK(ParseURL("http://example.com:0/file.txt", components) == false);
+		auto result = GetParseURL("http://example.com:0/file.txt");
+		CHECK_FALSE(result.has_value());
 	}
 
 	SECTION("Порт больше 65535")
 	{
-		UrlComponents components;
-		CHECK(ParseURL("http://example.com:70000/file.txt", components) == false);
+		auto result = GetParseURL("http://example.com:65536/file.txt");
+		CHECK_FALSE(result.has_value());
+	}
+
+	SECTION("Порт содержит буквы")
+	{
+		auto result = GetParseURL("http://example.com:80a/file.txt");
+		CHECK_FALSE(result.has_value());
 	}
 
 	SECTION("Пустая строка")
 	{
-		UrlComponents components;
-		CHECK(ParseURL("", components) == false);
+		auto result = GetParseURL("");
+		CHECK_FALSE(result.has_value());
+	}
+}
+
+TEST_CASE("Парсинг URL с граничными портами")
+{
+	SECTION("Минимальный допустимый порт")
+	{
+		auto result = GetParseURL("http://example.com:1/file.txt");
+		REQUIRE(result.has_value());
+		CHECK(result->port == 1);
+	}
+
+	SECTION("Максимальный допустимый порт")
+	{
+		auto result = GetParseURL("http://example.com:65535/file.txt");
+		REQUIRE(result.has_value());
+		CHECK(result->port == 65535);
 	}
 }

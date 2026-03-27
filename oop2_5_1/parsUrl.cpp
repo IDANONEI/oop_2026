@@ -12,15 +12,15 @@ int main()
 {
 	std::string url;
 	std::getline(std::cin, url);
-	UrlComponents components;
-
-	if (!ParseURL(url, components))
+	auto result = GetParseURL(url);
+	if (result)
 	{
-		std::cout << "ERROR" << std::endl;
-		return EXIT_FAILURE;
+		PrintResult(url, *result);
 	}
-
-	 PrintResult(url, components);
+	else
+	{
+		std::cout << "Invalid URL" << std::endl;
+	}
 
 	return EXIT_SUCCESS;
 }

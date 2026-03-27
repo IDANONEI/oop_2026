@@ -1,0 +1,8 @@
+A := [a]
+AA := [aa]
+B := [b]
+BB := [bb]
+C := [c]
+CC := [cc]
+
+-AABBCCCCCABC+
