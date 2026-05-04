@@ -1,3 +1,7 @@
+#include <iosfwd>
+#include <sstream>
+
+
 // Месяц
 enum class Month
 {
@@ -40,26 +44,32 @@ public:
 	// возвращает день недели
 	WeekDay GetWeekDay()const;
 
+
 	CDate& operator++();
 	CDate operator++(int);
 	CDate& operator--();
 	CDate operator--(int);
-	CDate operator+(int days) const;
-	friend CDate operator+(int days, const CDate& date);
-
-	CDate operator-(int days) const;
-	int operator-(const CDate& other) const;
+	CDate operator+(int days)const;
+	CDate operator-(int days)const;
 	CDate& operator+=(int days);
 	CDate& operator-=(int days);
 
-
-	bool operator==(const CDate& other) const;
-	bool operator!=(const CDate& other) const;
-	bool operator<(const CDate& other) const;
-	bool operator>(const CDate& other) const;
-	bool operator<=(const CDate& other) const;
-	bool operator>=(const CDate& other) const;
-
+	int operator-(const CDate& other) const;
 private:
 	int m_timestamp = 0;
 };
+
+CDate operator+(int days, const CDate& date);
+
+std::ostream& operator<<(std::ostream& out, const CDate& date);
+
+std::istream& operator>>(std::istream& in, CDate& date);
+
+bool operator==(const CDate& a, const CDate& b);
+bool operator!=(const CDate& a, const CDate& b);
+
+bool operator<(const CDate& a, const CDate& b);
+bool operator>(const CDate& a, const CDate& b);
+
+bool operator<=(const CDate& a, const CDate& b);
+bool operator>=(const CDate& a, const CDate& b);

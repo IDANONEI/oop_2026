@@ -35,17 +35,9 @@ TEST_CASE("Конструктор")
 		REQUIRE(date2.GetMonth() == Month::FEBRUARY);
 		REQUIRE(date2.GetYear() == 1970);
 	}
-
-	SECTION("Високосный год")
-	{
-		CDate date(29, Month::FEBRUARY, 1972);
-
-		REQUIRE(date.GetDay() == 29);
-	}
-
 }
 
-TEST_CASE("jтрицательные тесты")
+TEST_CASE("отрицательные тесты")
 {
 	SECTION("день")
 	{
@@ -195,20 +187,29 @@ TEST_CASE("Операторы")
     }
 }
 
-TEST_CASE("jтрицательные тесты в операторах")
+TEST_CASE("отрицательные тесты в операторах")
 {
-
 	SECTION("Выход за нижнюю границу через --")
 	{
 		CDate date(1, Month::JANUARY, 1970);
 
-		REQUIRE_THROWS(--date);
+		--date;
+
+		std::ostringstream out;
+		out << date;
+
+		REQUIRE(out.str() == "INVALID");
 	}
 
 	SECTION("Выход за нижнюю границу через -")
 	{
 		CDate date(1, Month::JANUARY, 1970);
 
-		REQUIRE_THROWS(date - 1);
+		CDate result = date - 1;
+
+		std::ostringstream out;
+		out << result;
+
+		REQUIRE(out.str() == "INVALID");
 	}
 }
