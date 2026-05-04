@@ -22,4 +22,7 @@ include(Catch)
 #add_subdirectory(oop2_5_1)
 #add_subdirectory(oop2_6)
 #add_subdirectory(oop3_1_2)
-add_subdirectory(oop3_3)
+#add_subdirectory(oop3_2)
+#add_subdirectory(oop4_1)
+add_subdirectory(oop5_1_5)
+

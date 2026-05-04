@@ -10,6 +10,7 @@ target_include_directories(oop3_2 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(oop3_2_tests
         test/testCalculator.cpp
+        test/testOptimization.cpp
         Calculator.cpp
         Variable.cpp
         Function.cpp

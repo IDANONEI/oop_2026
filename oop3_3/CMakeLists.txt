@@ -15,6 +15,7 @@ add_executable(oop3_3_tests
         Bank.cpp
         Actors.cpp
         Simulation.cpp
+        ../oop3_2/test/testOptimization.cpp
 )
 
 target_include_directories(oop3_3_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
